@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Управление табло</title><style>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Табло матча</title><style>
 body{font-family:Arial,sans-serif;background:#1a1a1a;color:#fff;text-align:center;padding:20px;margin:0}
 .container{display:flex;justify-content:center;gap:40px;margin-bottom:30px}
 .panel{padding:25px;border-radius:15px;width:280px;box-shadow:0 10px 20px rgba(0,0,0,.4);transition:background .3s}
@@ -19,19 +19,20 @@ button:active{transform:scale(.95)}
 .btn-stream{background:#ff9800;color:#000;padding:15px 30px;font-size:20px;margin-right:15px}
 .stream-mode{background:#000;padding:0;overflow:hidden;height:100vh;display:flex;align-items:center;justify-content:center}
 .stream-container{display:flex;width:100vw;height:100vh}
-.stream-side{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;height:100%;transition:background .2s;box-sizing:border-box;padding:4vh 3vw}
+.stream-side{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;height:100%;transition:background .2s;box-sizing:border-box;padding:4vh 3vw;width:50vw;overflow:hidden}
 .stream-blue{background:#0044ff}
 .stream-red{background:#ff0000}
-.stream-name-text{font-weight:bold;text-transform:uppercase;color:#fff;text-shadow:3px 3px 10px rgba(0,0,0,.8);text-align:center;width:100%;max-height:2.6em;line-height:1.2em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-wrap:break-word;white-space:normal;word-break:keep-all}
+.stream-name-wrap{width:100%;max-height:25vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.stream-name-text{font-weight:bold;text-transform:uppercase;color:#fff;text-shadow:3px 3px 10px rgba(0,0,0,.8);text-align:center;width:100%;line-height:1.1;word-wrap:break-word;white-space:normal}
 .stream-score-text{font-size:38vh;font-weight:bold;font-family:'Arial Black',sans-serif;color:#fff;line-height:1;text-shadow:5px 5px 15px rgba(0,0,0,.8)}
 </style></head><body>
 <div id="admin-panel"><h1>Управление табло матча</h1><div class="container">
-<div id="admin-left-card" class="panel blue-team"><div class="settings-group"><input type="text" id="left-name-input" class="team-input" value="Команда преподавателей" oninput="updateUI()"><div class="color-picker-wrapper"><label>Цвет:</label><input type="color" id="left-color-input" class="color-picker" value="#0044ff" oninput="updateColors()"></div></div><div id="left-score-view" class="score-display">0</div><div class="btn-group"><button class="btn-minus" onclick="changeScore('left',-1)">-1</button><button class="btn-plus" onclick="changeScore('left',1)">+1</button></div></div>
-<div id="admin-right-card" class="panel red-team"><div class="settings-group"><input type="text" id="right-name-input" class="team-input" value="Студенты" oninput="updateUI()"><div class="color-picker-wrapper"><label>Цвет:</label><input type="color" id="right-color-input" class="color-picker" value="#ff0000" oninput="updateColors()"></div></div><div id="right-score-view" class="score-display">0</div><div class="btn-group"><button class="btn-minus" onclick="changeScore('right',-1)">-1</button><button class="btn-plus" onclick="changeScore('right',1)">+1</button></div></div></div>
+<div id="admin-left-card" class="panel blue-team"><div class="settings-group"><input type="text" id="left-name-input" class="team-input" value="Синие" oninput="updateUI()"><div class="color-picker-wrapper"><label>Цвет:</label><input type="color" id="left-color-input" class="color-picker" value="#0044ff" oninput="updateColors()"></div></div><div id="left-score-view" class="score-display">0</div><div class="btn-group"><button class="btn-minus" onclick="changeScore('left',-1)">-1</button><button class="btn-plus" onclick="changeScore('left',1)">+1</button></div></div>
+<div id="admin-right-card" class="panel red-team"><div class="settings-group"><input type="text" id="right-name-input" class="team-input" value="Красные" oninput="updateUI()"><div class="color-picker-wrapper"><label>Цвет:</label><input type="color" id="right-color-input" class="color-picker" value="#ff0000" oninput="updateColors()"></div></div><div id="right-score-view" class="score-display">0</div><div class="btn-group"><button class="btn-minus" onclick="changeScore('right',-1)">-1</button><button class="btn-plus" onclick="changeScore('right',1)">+1</button></div></div></div>
 <div class="control-buttons"><button class="btn-stream" onclick="openStreamWindow()">📺 Открыть окно для зрителей</button><button class="btn-reset" onclick="resetScores()">Сбросить всё</button></div></div>
 <div id="stream-panel" style="display:none"><div class="stream-container">
-<div id="stream-left-bg" class="stream-side stream-blue"><div id="stream-left-name" class="stream-name-text">Команда преподавателей</div><div id="stream-left-score" class="stream-score-text">0</div></div>
-<div id="stream-right-bg" class="stream-side stream-red"><div id="stream-right-name" class="stream-name-text">Студенты</div><div id="stream-right-score" class="stream-score-text">0</div></div></div></div>
+<div id="stream-left-bg" class="stream-side stream-blue"><div class="stream-name-wrap"><div id="stream-left-name" class="stream-name-text">Синие</div></div><div id="stream-left-score" class="stream-score-text">0</div></div>
+<div id="stream-right-bg" class="stream-side stream-red"><div class="stream-name-wrap"><div id="stream-right-name" class="stream-name-text">Красные</div></div><div id="stream-right-score" class="stream-score-text">0</div></div></div></div>
 <script>
 let scores={left:0,right:0},streamWindow=null;
 function changeScore(side,val){scores[side]=Math.max(0,scores[side]+val);updateUI()}
@@ -41,18 +42,17 @@ function updateColors(){
     document.getElementById('admin-left-card').style.backgroundColor=l;document.getElementById('admin-right-card').style.backgroundColor=r;
     if(streamWindow&&!streamWindow.closed){let d=streamWindow.document;if(d.getElementById('stream-left-bg'))d.getElementById('stream-left-bg').style.backgroundColor=l;if(d.getElementById('stream-right-bg'))d.getElementById('stream-right-bg').style.backgroundColor=r;}
 }
-function adjustFontSize(el){
-    if(!el) return;let text=el.innerText;
-    if(text.length>18) el.style.fontSize='3.5vw';
-    else if(text.length>12) el.style.fontSize='4.5vw';
-    else el.style.fontSize='6vw';
+function fitText(el){
+    if(!el)return;let box=el.parentElement,f=6;el.style.fontSize=f+'vw';
+    while((el.offsetHeight>box.offsetHeight||el.offsetWidth>box.offsetWidth)&&f>1.5){f-=0.2;el.style.fontSize=f+'vw'}
 }
 function updateUI(){
     let lN=document.getElementById('left-name-input').value, rN=document.getElementById('right-name-input').value;
     document.getElementById('left-score-view').innerText=scores.left;document.getElementById('right-score-view').innerText=scores.right;
-    if(streamWindow&&!streamWindow.closed){let d=streamWindow.document;
+    if(streamWindow&&!streamWindow.closed){
+        let d=streamWindow.document;
         let lEl=d.getElementById('stream-left-name'), rEl=d.getElementById('stream-right-name');
-        if(lEl){lEl.innerText=lN;adjustFontSize(lEl)}if(rEl){rEl.innerText=rN;adjustFontSize(rEl)}
+        if(lEl){lEl.innerText=lN;fitText(lEl)}if(rEl){rEl.innerText=rN;fitText(rEl)}
         if(d.getElementById('stream-left-score'))d.getElementById('stream-left-score').innerText=scores.left;
         if(d.getElementById('stream-right-score'))d.getElementById('stream-right-score').innerText=scores.right;
     }
@@ -61,8 +61,9 @@ function openStreamWindow(){
     if(streamWindow&&!streamWindow.closed){streamWindow.focus();return}
     streamWindow=window.open("","ScoreboardStream","width=1240,height=720");
     let s=document.querySelector('style').innerHTML, c=document.getElementById('stream-panel').innerHTML;
-    streamWindow.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Табло</title><style>'+s+'</style></head><body class="stream-mode">'+c+'</body></html>');
-    streamWindow.document.close();setTimeout(()=>{updateUI();updateColors()},100);
+    streamWindow.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Табло зрителей</title><style>'+s+'</style></head><body class="stream-mode">'+c+'</body></html>');
+    streamWindow.document.close();streamWindow.addEventListener('resize',()=>{let d=streamWindow.document;fitText(d.getElementById('stream-left-name'));fitText(d.getElementById('stream-right-name'))});
+    setTimeout(()=>{updateUI();updateColors()},100);
 }
 window.onbeforeunload=function(){if(streamWindow&&!streamWindow.closed)streamWindow.close()};
 </script></body></html>
