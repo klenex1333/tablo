@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Табло матча</title>
+<title>Панель управления матчем</title>
 <style>
 body{font-family:Arial,sans-serif;background:#1a1a1a;color:#fff;text-align:center;padding:20px;margin:0}
 .container{display:flex;justify-content:center;gap:40px;margin-bottom:30px}
@@ -22,36 +22,18 @@ button:active{transform:scale(.95)}
 .control-buttons{margin-top:30px}
 .btn-reset{background:#555;color:#fff;padding:15px 40px;font-size:20px}
 .btn-stream{background:#ff9800;color:#000;padding:15px 30px;font-size:20px;margin-right:15px}
-
-/* Режим стрима / Окно зрителей */
-.stream-mode {background:#000;padding:0;overflow:hidden;height:100vh;display:flex;align-items:center;justify-content:center}
-.stream-container {display:flex;width:100vw;height:100vh}
-.stream-side {flex:1;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;height:100%;transition:background .2s;box-sizing:border-box;padding:4vh 3vw;width:50vw;overflow:hidden}
-
-/* Стили для автотекста (Важное изменение) */
-.stream-team-name {
-    width: 100%;
-    text-align: center;
-    white-space: nowrap; /* Запрещаем перенос слов */
-    font-weight: bold;
-    display: inline-block;
-}
-.stream-score {
-    font-weight: bold;
-    font-family: monospace;
-}
 </style>
 </head>
 <body>
 
-<!-- Панель управления (скрывается в режиме стрима) -->
 <div id="admin-panel">
     <div class="container">
+        <!-- Синяя команда -->
         <div class="panel blue-team" id="panel1">
             <div class="settings-group">
-                <input type="text" class="team-input" id="name1" value="КОМАНДА СИНГ">
+                <input type="text" class="team-input" id="name1" value="КОМАНДА СИН" oninput="updateStreamData()">
                 <div class="color-picker-wrapper">
-                    Цвет: <input type="color" class="color-picker" id="color1" value="#0d47a1">
+                    Цвет: <input type="color" class="color-picker" id="color1" value="#0d47a1" onchange="updateStreamData()">
                 </div>
             </div>
             <div class="score-display" id="score-val1">0</div>
@@ -61,11 +43,12 @@ button:active{transform:scale(.95)}
             </div>
         </div>
         
+        <!-- Красная команда -->
         <div class="panel red-team" id="panel2">
             <div class="settings-group">
-                <input type="text" class="team-input" id="name2" value="АДМИНИСТРАТ">
+                <input type="text" class="team-input" id="name2" value="АДМИНИСТРАТ" oninput="updateStreamData()">
                 <div class="color-picker-wrapper">
-                    Цвет: <input type="color" class="color-picker" id="color2" value="#b71c1c">
+                    Цвет: <input type="color" class="color-picker" id="color2" value="#b71c1c" onchange="updateStreamData()">
                 </div>
             </div>
             <div class="score-display" id="score-val2">0</div>
@@ -75,102 +58,151 @@ button:active{transform:scale(.95)}
             </div>
         </div>
     </div>
+    
     <div class="control-buttons">
-        <button class="btn-stream" onclick="toggleStreamMode()">Режим зрителей</button>
+        <button class="btn-stream" onclick="openStreamWindow()">Открыть окно зрителей</button>
         <button class="btn-reset" onclick="resetScore()">Сброс</button>
     </div>
 </div>
 
-<!-- Экран зрителей (по умолчанию скрыт, включается кнопкой) -->
-<div id="stream-view" style="display: none;">
-    <div class="stream-container">
-        <div class="stream-side" id="view-side1">
-            <div class="stream-team-name" id="view-name1">КОМАНДА СИНГ</div>
-            <div class="stream-score" id="view-score1">0</div>
-        </div>
-        <div class="stream-side" id="view-side2">
-            <div class="stream-team-name" id="view-name2">АДМИНИСТРАТ</div>
-            <div class="stream-score" id="view-score2">0</div>
-        </div>
-    </div>
-</div>
-
 <script>
-// Данные табло
 let scores = { 1: 0, 2: 0 };
+let streamWindow = null; // Переменная для хранения ссылки на второе окно
 
+// Изменение счета
 function changeScore(team, val) {
     scores[team] = Math.max(0, scores[team] + val);
     document.getElementById(`score-val${team}`).innerText = scores[team];
-    document.getElementById(`view-score${team}`).innerText = scores[team];
+    updateStreamData(); // Сразу передаем новый счет в окно зрителей
 }
 
+// Сброс счета
 function resetScore() {
     scores[1] = 0;
     scores[2] = 0;
-    changeScore(1, 0);
-    changeScore(2, 0);
+    document.getElementById('score-val1').innerText = 0;
+    document.getElementById('score-val2').innerText = 0;
+    updateStreamData();
 }
 
-// Переключение режимов
-function toggleStreamMode() {
-    const admin = document.getElementById('admin-panel');
-    const stream = document.getElementById('stream-view');
-    
-    // Обновляем данные перед показом
-    document.getElementById('view-name1').innerText = document.getElementById('name1').value;
-    document.getElementById('view-name2').innerText = document.getElementById('name2').value;
-    document.getElementById('view-side1').style.background = document.getElementById('color1').value;
-    document.getElementById('view-side2').style.background = document.getElementById('color2').value;
-    
-    admin.style.display = 'none';
-    stream.style.display = 'block';
-    document.body.classList.add('stream-mode');
-    
-    // Запускаем подгонку шрифтов
-    initAutoFontResize();
-}
+// Функция отправки актуальных данных во второе окно
+function updateStreamData() {
+    if (!streamWindow || streamWindow.closed) return;
 
-// Скрипт автоматического изменения размера текста под ширину экрана
-function initAutoFontResize() {
-    const elements = document.querySelectorAll('.stream-team-name, .stream-score');
+    const n1 = document.getElementById('name1').value;
+    const n2 = document.getElementById('name2').value;
+    const c1 = document.getElementById('color1').value;
+    const c2 = document.getElementById('color2').value;
+
+    // Передаем данные напрямую в DOM дочернего окна
+    const sDoc = streamWindow.document;
     
-    const resizeObserver = new ResizeObserver(entries => {
-        for (let entry of entries) {
-            const el = entry.target;
-            const parent = el.parentElement;
-            
-            // Сбрасываем размер для расчетов
-            el.style.fontSize = '10px'; 
-            
-            // Вычисляем максимально доступные размеры (с запасом на отступы)
-            const maxW = parent.clientWidth * 0.85; 
-            const maxH = parent.clientHeight * 0.35; 
-            
-            let fontSize = 10;
-            
-            // Шаг увеличения шрифта пока текст помещается в рамки
-            while (el.scrollWidth < maxW && el.scrollHeight < maxH && fontSize < 200) {
-                fontSize += 2;
-                el.style.fontSize = fontSize + 'px';
-            }
-            
-            // Чуть уменьшаем, чтобы избежать пограничных багов
-            el.style.fontSize = (fontSize - 4) + 'px';
-        }
-    });
-
-    elements.forEach(el => resizeObserver.observe(el));
-}
-
-// Возврат в меню по кнопке Escape
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && document.body.classList.contains('stream-mode')) {
-        document.getElementById('admin-panel').style.display = 'block';
-        document.getElementById('stream-view').style.display = 'none';
-        document.body.classList.remove('stream-mode');
+    if (sDoc.getElementById('view-name1')) {
+        sDoc.getElementById('view-name1').innerText = n1;
+        sDoc.getElementById('view-name2').innerText = n2;
+        sDoc.getElementById('view-score1').innerText = scores[1];
+        sDoc.getElementById('view-score2').innerText = scores[2];
+        sDoc.getElementById('view-side1').style.backgroundColor = c1;
+        sDoc.getElementById('view-side2').style.backgroundColor = c2;
     }
-});
+}
+
+// Открытие отдельного окна для второго монитора
+function openStreamWindow() {
+    // Если окно уже открыто, просто переводим на него фокус
+    if (streamWindow && !streamWindow.closed) {
+        streamWindow.focus();
+        return;
+    }
+
+    // Создаем новое чистое окно нужного размера
+    streamWindow = window.open("", "StreamViewport", "width=1200,height=700,resizable=yes");
+    
+    // Генерируем HTML-разметку внутри нового окна
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Табло матча (Экран зрителей)</title>
+        <style>
+            body {
+                background: #000; margin: 0; padding: 0; overflow: hidden; 
+                height: 100vh; font-family: Arial, sans-serif; color: #fff;
+            }
+            .stream-container { display: flex; width: 100vw; height: 100vh; }
+            .stream-side {
+                flex: 1; display: flex; flex-direction: column; 
+                align-items: center; justify-content: space-evenly; 
+                height: 100%; transition: background .2s; 
+                box-sizing: border-box; padding: 4vh 3vw; width: 50vw; overflow: hidden;
+            }
+            .stream-team-name {
+                width: 100%; text-align: center; 
+                white-space: nowrap; font-weight: bold; display: inline-block;
+            }
+            .stream-score { font-weight: bold; font-family: monospace; }
+        </style>
+    </head>
+    <body>
+        <div class="stream-container">
+            <div class="stream-side" id="view-side1">
+                <div class="stream-team-name" id="view-name1"></div>
+                <div class="stream-score" id="view-score1">0</div>
+            </div>
+            <div class="stream-side" id="view-side2">
+                <div class="stream-team-name" id="view-name2"></div>
+                <div class="stream-score" id="view-score2">0</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+
+    streamWindow.document.write(htmlContent);
+    streamWindow.document.close();
+
+    // Скрипт автоматического ресайза текста, который будет работать внутри нового окна
+    const resizeScript = `
+    function initAutoFontResize() {
+        const elements = document.querySelectorAll('.stream-team-name, .stream-score');
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                const el = entry.target;
+                const parent = el.parentElement;
+                el.style.fontSize = '10px'; 
+                
+                const maxW = parent.clientWidth * 0.85; 
+                const maxH = parent.clientHeight * 0.35; 
+                let fontSize = 10;
+                
+                while (el.scrollWidth < maxW && el.scrollHeight < maxH && fontSize < 300) {
+                    fontSize += 2;
+                    el.style.fontSize = fontSize + 'px';
+                }
+                el.style.fontSize = (fontSize - 4) + 'px';
+            }
+        });
+        elements.forEach(el => resizeObserver.observe(el));
+    }
+    initAutoFontResize();
+    `;
+
+    // Внедряем JS-скрипт ресайза во второе окно
+    const scriptEl = streamWindow.document.createElement('script');
+    scriptEl.text = resizeScript;
+    streamWindow.document.body.appendChild(scriptEl);
+
+    // Заполняем данными сразу после открытия
+    setTimeout(updateStreamData, 100);
+}
+
+// При закрытии главного окна закрываем и окно зрителей
+window.onbeforeunload = function() {
+    if (streamWindow && !streamWindow.closed) {
+        streamWindow.close();
+    }
+};
 </script>
 </body>
 </html>
