@@ -67,16 +67,14 @@ button:active{transform:scale(.95)}
 
 <script>
 let scores = { 1: 0, 2: 0 };
-let streamWindow = null; // Переменная для хранения ссылки на второе окно
+let streamWindow = null;
 
-// Изменение счета
 function changeScore(team, val) {
     scores[team] = Math.max(0, scores[team] + val);
     document.getElementById(`score-val${team}`).innerText = scores[team];
-    updateStreamData(); // Сразу передаем новый счет в окно зрителей
+    updateStreamData(); 
 }
 
-// Сброс счета
 function resetScore() {
     scores[1] = 0;
     scores[2] = 0;
@@ -85,7 +83,6 @@ function resetScore() {
     updateStreamData();
 }
 
-// Функция отправки актуальных данных во второе окно
 function updateStreamData() {
     if (!streamWindow || streamWindow.closed) return;
 
@@ -94,31 +91,29 @@ function updateStreamData() {
     const c1 = document.getElementById('color1').value;
     const c2 = document.getElementById('color2').value;
 
-    // Передаем данные напрямую в DOM дочернего окна
     const sDoc = streamWindow.document;
     
     if (sDoc.getElementById('view-name1')) {
         sDoc.getElementById('view-name1').innerText = n1;
         sDoc.getElementById('view-name2').innerText = n2;
+        
+        // ИСПРАВЛЕНО: Теперь передаются конкретные цифры, а не весь объект
         sDoc.getElementById('view-score1').innerText = scores[1];
         sDoc.getElementById('view-score2').innerText = scores[2];
+        
         sDoc.getElementById('view-side1').style.backgroundColor = c1;
         sDoc.getElementById('view-side2').style.backgroundColor = c2;
     }
 }
 
-// Открытие отдельного окна для второго монитора
 function openStreamWindow() {
-    // Если окно уже открыто, просто переводим на него фокус
     if (streamWindow && !streamWindow.closed) {
         streamWindow.focus();
         return;
     }
 
-    // Создаем новое чистое окно нужного размера
     streamWindow = window.open("", "StreamViewport", "width=1200,height=700,resizable=yes");
     
-    // Генерируем HTML-разметку внутри нового окна
     const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -135,13 +130,13 @@ function openStreamWindow() {
                 flex: 1; display: flex; flex-direction: column; 
                 align-items: center; justify-content: space-evenly; 
                 height: 100%; transition: background .2s; 
-                box-sizing: border-box; padding: 4vh 3vw; width: 50vw; overflow: hidden;
+                box-sizing: border-box; padding: 2vh 2vw; width: 50vw; overflow: hidden;
             }
             .stream-team-name {
                 width: 100%; text-align: center; 
                 white-space: nowrap; font-weight: bold; display: inline-block;
             }
-            .stream-score { font-weight: bold; font-family: monospace; }
+            .stream-score { font-weight: bold; font-family: monospace; line-height: 1; }
         </style>
     </head>
     <body>
@@ -162,7 +157,7 @@ function openStreamWindow() {
     streamWindow.document.write(htmlContent);
     streamWindow.document.close();
 
-    // Скрипт автоматического ресайза текста, который будет работать внутри нового окна
+    // Обновленный скрипт автоподгона с увеличенными лимитами
     const resizeScript = `
     function initAutoFontResize() {
         const elements = document.querySelectorAll('.stream-team-name, .stream-score');
@@ -170,17 +165,22 @@ function openStreamWindow() {
             for (let entry of entries) {
                 const el = entry.target;
                 const parent = el.parentElement;
+                
+                // Начинаем подгон с 10px
                 el.style.fontSize = '10px'; 
                 
-                const maxW = parent.clientWidth * 0.85; 
-                const maxH = parent.clientHeight * 0.35; 
+                // Выделяем 90% ширины и 40% высоты под каждый элемент
+                const maxW = parent.clientWidth * 0.90; 
+                const maxH = parent.clientHeight * 0.40; 
                 let fontSize = 10;
                 
-                while (el.scrollWidth < maxW && el.scrollHeight < maxH && fontSize < 300) {
-                    fontSize += 2;
+                // Быстрый цикл подбора размера
+                while (el.scrollWidth < maxW && el.scrollHeight < maxH && fontSize < 500) {
+                    fontSize += 4;
                     el.style.fontSize = fontSize + 'px';
                 }
-                el.style.fontSize = (fontSize - 4) + 'px';
+                // Оставляем максимальный подходящий размер
+                el.style.fontSize = (fontSize - 6) + 'px';
             }
         });
         elements.forEach(el => resizeObserver.observe(el));
@@ -188,16 +188,14 @@ function openStreamWindow() {
     initAutoFontResize();
     `;
 
-    // Внедряем JS-скрипт ресайза во второе окно
     const scriptEl = streamWindow.document.createElement('script');
     scriptEl.text = resizeScript;
     streamWindow.document.body.appendChild(scriptEl);
 
-    // Заполняем данными сразу после открытия
-    setTimeout(updateStreamData, 100);
+    // Первичное заполнение данными
+    setTimeout(updateStreamData, 50);
 }
 
-// При закрытии главного окна закрываем и окно зрителей
 window.onbeforeunload = function() {
     if (streamWindow && !streamWindow.closed) {
         streamWindow.close();
