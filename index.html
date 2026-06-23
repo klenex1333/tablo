@@ -97,7 +97,6 @@ function updateStreamData() {
         sDoc.getElementById('view-name1').innerText = n1;
         sDoc.getElementById('view-name2').innerText = n2;
         
-        // ИСПРАВЛЕНО: Теперь передаются конкретные цифры, а не весь объект
         sDoc.getElementById('view-score1').innerText = scores[1];
         sDoc.getElementById('view-score2').innerText = scores[2];
         
@@ -112,7 +111,7 @@ function openStreamWindow() {
         return;
     }
 
-    streamWindow = window.open("", "StreamViewport", "width=1200,height=700,resizable=yes");
+    streamWindow = window.open("", "StreamViewport", "width=1280,height=720,resizable=yes");
     
     const htmlContent = `
     <!DOCTYPE html>
@@ -128,15 +127,16 @@ function openStreamWindow() {
             .stream-container { display: flex; width: 100vw; height: 100vh; }
             .stream-side {
                 flex: 1; display: flex; flex-direction: column; 
-                align-items: center; justify-content: space-evenly; 
+                align-items: center; justify-content: center; gap: 2vh;
                 height: 100%; transition: background .2s; 
-                box-sizing: border-box; padding: 2vh 2vw; width: 50vw; overflow: hidden;
+                box-sizing: border-box; padding: 0 4vw; width: 50vw; overflow: hidden;
             }
             .stream-team-name {
                 width: 100%; text-align: center; 
                 white-space: nowrap; font-weight: bold; display: inline-block;
+                text-transform: uppercase;
             }
-            .stream-score { font-weight: bold; font-family: monospace; line-height: 1; }
+            .stream-score { font-weight: bold; font-family: monospace; line-height: 0.9; }
         </style>
     </head>
     <body>
@@ -157,33 +157,47 @@ function openStreamWindow() {
     streamWindow.document.write(htmlContent);
     streamWindow.document.close();
 
-    // Обновленный скрипт автоподгона с увеличенными лимитами
+    // Полностью обновленный агрессивный скрипт подгона
     const resizeScript = `
     function initAutoFontResize() {
-        const elements = document.querySelectorAll('.stream-team-name, .stream-score');
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                const el = entry.target;
+        const names = document.querySelectorAll('.stream-team-name');
+        const scores = document.querySelectorAll('.stream-score');
+        
+        const resizeObserver = new ResizeObserver(() => {
+            // 1. Подгоняем названия команд СТРОГО по ширине окна
+            names.forEach(el => {
                 const parent = el.parentElement;
+                el.style.fontSize = '10px';
                 
-                // Начинаем подгон с 10px
-                el.style.fontSize = '10px'; 
-                
-                // Выделяем 90% ширины и 40% высоты под каждый элемент
-                const maxW = parent.clientWidth * 0.90; 
-                const maxH = parent.clientHeight * 0.40; 
+                const maxW = parent.clientWidth * 0.92; // Занимать 92% ширины половины экрана
                 let fontSize = 10;
                 
-                // Быстрый цикл подбора размера
-                while (el.scrollWidth < maxW && el.scrollHeight < maxH && fontSize < 500) {
+                while (el.scrollWidth < maxW && fontSize < 400) {
                     fontSize += 4;
                     el.style.fontSize = fontSize + 'px';
                 }
-                // Оставляем максимальный подходящий размер
                 el.style.fontSize = (fontSize - 6) + 'px';
-            }
+            });
+
+            // 2. Подгоняем счет с упором на высоту (чтобы цифры были огромными)
+            scores.forEach(el => {
+                const parent = el.parentElement;
+                el.style.fontSize = '10px';
+                
+                const maxW = parent.clientWidth * 0.85;
+                const maxH = parent.clientHeight * 0.55; // Счет может занимать до 55% высоты экрана
+                let fontSize = 10;
+                
+                while (el.scrollWidth < maxW && el.scrollHeight < maxH && fontSize < 600) {
+                    fontSize += 6;
+                    el.style.fontSize = fontSize + 'px';
+                }
+                el.style.fontSize = (fontSize - 10) + 'px';
+            });
         });
-        elements.forEach(el => resizeObserver.observe(el));
+
+        // Наблюдаем за обеими половинками экрана
+        document.querySelectorAll('.stream-side').forEach(side => resizeObserver.observe(side));
     }
     initAutoFontResize();
     `;
@@ -192,7 +206,6 @@ function openStreamWindow() {
     scriptEl.text = resizeScript;
     streamWindow.document.body.appendChild(scriptEl);
 
-    // Первичное заполнение данными
     setTimeout(updateStreamData, 50);
 }
 
